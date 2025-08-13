@@ -1,36 +1,1006 @@
-<link href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.10/semantic.min.css" rel="stylesheet" id="bootstrap-css">
-<script src="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.10/semantic.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<!------ Include the above in your HEAD tag ---------->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🔵 BTS Sector Mapping Interface</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      font-family: 'Courier New', monospace;
+      background-color: black;
+      color: #0066ff;
+      overflow-x: hidden;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.light-mode {
+      background-color: #eee;
+      color: #003399;
+    }
+    body.light-mode #map {
+      border-color: #003399;
+      box-shadow: 0 0 15px #003399;
+    }
+    #particles-js {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      opacity: 100;
+    }
+    .content {
+      position: relative;
+      z-index: 10;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #0066ff;
+      text-shadow: 0 0 8px #0066ff;
+    }
+    body.light-mode h2 {
+      color: #003399;
+      text-shadow: 0 0 5px #003399;
+    }
+    .info-box {
+      background-color: #111;
+      border: 1px solid #0066ff;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 10px #0066ff;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+    body.light-mode .info-box {
+      background-color: #e6f0ff;
+      border-color: #003399;
+      box-shadow: 0 0 10px #003399;
+      color: #002266;
+    }
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .input-group {
+      flex: 1;
+      min-width: 180px;
+    }
+    .input-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 8px;
+      background-color: #000;
+      color: #0066ff;
+      border: 1px solid #0066ff;
+      border-radius: 4px;
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .input-group input:invalid {
+      border-color: #ff0000;
+      box-shadow: 0 0 5px #ff0000;
+    }
+    .input-group input:invalid + label::after {
+      content: " *";
+      color: #ff0000;
+    }
+    body.light-mode .input-group input {
+      background-color: #fff;
+      color: #003399;
+      border-color: #003399;
+    }
+    .btn-update {
+      background-color: #000;
+      color: #0066ff;
+      border: 1px solid #0066ff;
+      font-weight: bold;
+      padding: 10px;
+      width: 100%;
+      cursor: pointer;
+      border-radius: 4px;
+      text-shadow: 0 0 5px #0066ff;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .btn-update:hover {
+      background-color: #0066ff;
+      color: #000;
+    }
+    body.light-mode .btn-update {
+      background-color: #e6f0ff;
+      color: #003399;
+      border-color: #003399;
+      text-shadow: none;
+    }
+    body.light-mode .btn-update:hover {
+      background-color: #003399;
+      color: #e6f0ff;
+    }
+    #map {
+      height: 600px;
+      width: 100%;
+      border: 2px solid #0066ff;
+      border-radius: 6px;
+      box-shadow: 0 0 15px #0066ff;
+      margin-bottom: 20px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      z-index: 11;
+    }
+    body.light-mode #map {
+      border-color: #003399;
+      box-shadow: 0 0 15px #003399;
+    }
+    #info-container table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #001a33;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 0 10px #0066ff;
+      color: #0066ff;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.light-mode #info-container table {
+      background-color: #d9e6ff;
+      color: #003399;
+      box-shadow: 0 0 10px #003399;
+    }
+    #info-container th,
+    #info-container td {
+      border: 1px solid #0066ff;
+      padding: 12px 15px;
+      text-align: left;
+      vertical-align: top;
+      transition: border-color 0.3s;
+    }
+    body.light-mode #info-container th,
+    body.light-mode #info-container td {
+      border-color: #003399;
+    }
+    #info-container th {
+      background-color: #002b4d;
+      font-weight: bold;
+      text-shadow: 0 0 5px #0066ff;
+    }
+    body.light-mode #info-container th {
+      background-color: #b3ccff;
+      text-shadow: none;
+    }
+    .bts-icon {
+      background-color: red;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      box-shadow: 0 0 10px red;
+      border: 1px solid red;
+      font-size: 10px;
+    }
+    #weather {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      margin-top: 8px;
+    }
+    #weather img {
+      width: 48px;
+      height: 48px;
+    }
+    #modeToggle {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: 2px solid #0066ff;
+      color: #0066ff;
+      font-weight: bold;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 100;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    #modeToggle:hover {
+      background-color: #0066ff;
+      color: #000;
+    }
+    body.light-mode #modeToggle {
+      border-color: #003399;
+      color: #003399;
+    }
+    body.light-mode #modeToggle:hover {
+      background-color: #003399;
+      color: #e6f0ff;
+    }
+    .leaflet-popup-content iframe {
+      border-radius: 8px;
+      width: 100%;
+      height: 300px;
+      border: none;
+    }
+    #streetview-result iframe {
+      border: 1px solid #0066ff;
+      box-shadow: 0 0 8px #0066ff;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      border-radius: 8px;
+    }
+    body.light-mode #streetview-result iframe {
+      border-color: #003399;
+      box-shadow: 0 0 8px #003399;
+    }
+    .glow {
+      animation: glow 2s infinite alternate;
+    }
+    @keyframes glow {
+      from { stroke-opacity: 0.3; }
+      to { stroke-opacity: 0.8; }
+    }
+    /* Sector styles */
+    .sector-main {
+      color: #ff0000;
+      fillColor: #ff0000;
+      fillOpacity: 0.4;
+      weight: 2;
+    }
+    .sector-radar {
+      color: #0066ff;
+      fillColor: #0066ff;
+      fillOpacity: 0.15;
+      weight: 2;
+    }
+    .sector-label {
+      color: #ff0000;
+      text-shadow: 0 0 4px black;
+    }
+    /* Enhanced sector description styling */
+    .sector-details {
+      line-height: 1.6;
+    }
+    .sector-details h4 {
+      color: #3399ff;
+      margin-bottom: 8px;
+      border-bottom: 1px dashed #0066ff;
+      padding-bottom: 4px;
+    }
+    .sector-details ul {
+      padding-left: 20px;
+      margin: 8px 0;
+    }
+    .sector-details li {
+      margin-bottom: 6px;
+    }
+    .signal-quality {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+    .signal-excellent {
+      background-color: #006600;
+      color: white;
+    }
+    .signal-good {
+      background-color: #666600;
+      color: black;
+    }
+    .signal-fair {
+      background-color: #660000;
+      color: white;
+    }
+    body.light-mode .sector-details h4 {
+      color: #003399;
+      border-bottom-color: #003399;
+    }
+    /* Weather info styling */
+    #weather-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+    }
+    .weather-card {
+      background-color: #001133;
+      border: 1px solid #0066ff;
+      border-radius: 8px;
+      padding: 15px;
+      min-width: 200px;
+      box-shadow: 0 0 10px rgba(0, 102, 255, 0.3);
+    }
+    body.light-mode .weather-card {
+      background-color: #e0f0ff;
+      border-color: #003399;
+      box-shadow: 0 0 10px rgba(0, 51, 153, 0.2);
+    }
+    .weather-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .weather-temp {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .weather-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .weather-icon {
+      width: 50px;
+      height: 50px;
+    }
+    .weather-loading {
+      text-align: center;
+      padding: 20px;
+      font-style: italic;
+    }
+    .weather-error {
+      color: #ff5555;
+      text-align: center;
+      padding: 20px;
+    }
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .input-row {
+        flex-direction: column;
+      }
+      #map {
+        height: 400px;
+      }
+      .weather-card {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="particles-js"></div>
 
-<div class="spacer"></div>
+  <button id="modeToggle" title="Toggle Dark/Light Mode">💡 Mode</button>
 
-<div class="ui middle aligned stackable grid container">
-		<div class="row">
-			<div class="eight wide column">
-				<h3 class="ui huge header">Do you have a sweet tooth?</h3>
-				<p>Cupcake ipsum dolor sit amet dessert lollipop cupcake. Bear claw topping jelly-o cookie pie. Liquorice lemon drops gingerbread chupa chups carrot cake. Tiramisu pie bonbon candy canes.
-				Candy canes gingerbread dragée chupa chups chocolate bar. Gummies jelly-o chocolate tootsie roll fruitcake biscuit dessert ice cream candy.</p>
-				<h3 class="ui huge header">Let them eat cake!</h3>
-				<p>Powder chupa chups tiramisu bonbon sweet roll gummies chupa chups. Tootsie roll soufflé cupcake. Toffee chupa chups cake chupa chups toffee.
-				Candy marzipan chocolate. Soufflé ice cream macaroon marshmallow croissant gummi bears sesame snaps.</p>
-			</div>
-			<div class="six wide right floated column">
-				<img src="http://moziru.com/images/sweets-clipart-mini-cupcake-11.jpg" class="ui medium centered fluid image" />
-			</div>
-		</div>
-		<div class="row">
-		<div class="six wide column">
-				<img src="https://animagehub.com/wp-content/uploads/2016/09/cupcake-vector-5.jpg" class="ui medium centered fluid image" />
-			</div>
-			<div class="eight wide right floated column">
-				<h3 class="ui huge header">Baking and shaking</h3>
-				<p>Pie caramels muffin ice cream cake oat cake oat cake biscuit. Chupa chups donut bonbon gingerbread marshmallow. Tiramisu chocolate bar macaroon sweet macaroon tiramisu candy canes danish jelly.</p>
-				<h3 class="ui huge header">Movers and Bakers</h3>
-				<p>Dessert chocolate bar toffee wafer tiramisu dessert muffin wafer. Gummi bears danish bear claw sugar plum muffin fruitcake. Dragée bonbon donut jelly-o tiramisu lollipop ice cream cupcake.
-				Dessert gummi bears chocolate cake jelly-o halvah brownie topping gummi bears lemon drops. </p>
-			</div>			
-		</div>
-	</div>
-	
-<div class="spacer"></div>
+  <div class="content">
+    <h2>🛰️ BTS Sector Mapping Interface</h2>
+
+    <div class="info-box">
+      <div class="input-row">
+        <div class="input-group">
+          <label for="bts-coords">Koordinat (lat,lng)</label>
+          <input type="text" id="bts-coords" placeholder="contoh: -8.56283,116.11464" required />
+        </div>
+        <div class="input-group">
+          <label for="bts-direction">Derajat Antena</label>
+          <input type="number" id="bts-direction" min="0" max="360" placeholder="0-360" required />
+        </div>
+        <div class="input-group">
+          <label for="device-distance">Jarak (meter)</label>
+          <input type="number" id="device-distance" min="1" placeholder="dalam meter" required />
+        </div>
+      </div>
+      <button id="update-btn" class="btn-update">[ UPDATE MAP ]</button>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="info-container">
+      <table>
+        <thead>
+          <tr>
+            <th colspan="2">📍 Detail Lokasi BTS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Koordinat</strong></td>
+            <td id="coord-result">-</td>
+          </tr>
+          <tr>
+            <td><strong>Alamat Lengkap</strong></td>
+            <td id="location-result">Masukkan koordinat BTS</td>
+          </tr>
+          <tr>
+            <td><strong>Street View</strong></td>
+            <td id="streetview-result">
+              <div style="width:100%;height:200px;">
+                <iframe id="streetview-iframe" style="width:100%;height:100%;border:none;"></iframe>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <br />
+
+      <table>
+        <thead>
+          <tr>
+            <th>⛅ Informasi Cuaca Lokasi BTS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div id="weather-info">
+                <div class="weather-loading">Masukkan koordinat untuk melihat cuaca</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <br />
+
+      <table>
+        <thead>
+          <tr>
+            <th>📡 Penjelasan Sektor Antena</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td id="sector-description"><div class="sector-details">Masukkan parameter antena</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Particles.js for Network Visualization -->
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+  <!-- Main Application Script -->
+  <script>
+    function toDMS(deg, isLat) {
+      const absolute = Math.abs(deg);
+      const degrees = Math.floor(absolute);
+      const minutesNotTruncated = (absolute - degrees) * 60;
+      const minutes = Math.floor(minutesNotTruncated);
+      const seconds = ((minutesNotTruncated - minutes) * 60).toFixed(2);
+
+      const direction = isLat
+        ? deg >= 0 ? "N" : "S"
+        : deg >= 0 ? "E" : "W";
+
+      return `${degrees}°${minutes}′${seconds}″ ${direction}`;
+    }
+
+    let map;
+    let towerMarker;
+    let sectorPolygonMain;  // merah diam
+    let sectorPolygonRadar; // biru animasi
+    let animationInterval;
+
+    // Fungsi untuk mengambil data cuaca
+    async function getWeatherData(lat, lng) {
+      const apiKey = 'cf4812f74c4344178ae213634252907';
+      const weatherInfo = document.getElementById('weather-info');
+      
+      try {
+        weatherInfo.innerHTML = '<div class="weather-loading">Memuat data cuaca...</div>';
+        
+        const response = await fetch(
+          `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${lat},${lng}&lang=id`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        displayWeather(data);
+      } catch (error) {
+        console.error('Gagal mengambil data cuaca:', error);
+        weatherInfo.innerHTML = `
+          <div class="weather-error">
+            Gagal memuat data cuaca. API limit mungkin tercapai.
+          </div>
+        `;
+        event.preventDefault();
+      }
+    }
+
+    // Fungsi untuk menampilkan data cuaca
+    function displayWeather(weatherData) {
+      const weatherInfo = document.getElementById('weather-info');
+      const current = weatherData.current;
+      const location = weatherData.location;
+      
+      const localTime = new Date(location.localtime).toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      weatherInfo.innerHTML = `
+        <div class="weather-card">
+          <div class="weather-header">
+            <img src="https:${current.condition.icon}" class="weather-icon" alt="${current.condition.text}">
+            <div>
+              <div class="weather-temp">${current.temp_c}°C</div>
+              <div>${current.condition.text}</div>
+            </div>
+          </div>
+          <div class="weather-details">
+            <div><strong>Lokasi:</strong></div>
+            <div>${location.name}, ${location.region}</div>
+            
+            <div><strong>Waktu:</strong></div>
+            <div>${localTime}</div>
+            
+            <div><strong>Kelembaban:</strong></div>
+            <div>${current.humidity}%</div>
+            
+            <div><strong>Angin:</strong></div>
+            <div>${current.wind_kph} km/jam (${current.wind_dir})</div>
+            
+            <div><strong>Tekanan:</strong></div>
+            <div>${current.pressure_mb} mb</div>
+            
+            <div><strong>UV Index:</strong></div>
+            <div>${current.uv}</div>
+          </div>
+        </div>
+        
+        <div class="weather-card">
+          <h4>Kualitas Sinyal Potensial</h4>
+          <div class="weather-details">
+            <div><strong>Kondisi:</strong></div>
+            <div>${getSignalQuality(current)}</div>
+            
+            <div><strong>Visibilitas:</strong></div>
+            <div>${current.vis_km} km</div>
+            
+            <div><strong>Awan:</strong></div>
+            <div>${current.cloud}%</div>
+            
+            <div><strong>Presipitasi:</strong></div>
+            <div>${current.precip_mm} mm</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Fungsi untuk menentukan kualitas sinyal berdasarkan kondisi cuaca
+    function getSignalQuality(weather) {
+      if (weather.vis_km < 1 || weather.precip_mm > 10) {
+        return '<span style="color:#ff5555">Buruk (Hujan Lebat/Kabut)</span>';
+      } else if (weather.precip_mm > 5 || weather.cloud > 70) {
+        return '<span style="color:#ffaa00">Sedang (Hujan/Awan Tebal)</span>';
+      } else {
+        return '<span style="color:#55ff55">Baik (Cerah/Berawan Ringan)</span>';
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Initialize particles.js
+      particlesJS("particles-js", {
+        "particles": {
+          "number": {
+            "value": 80,
+            "density": {
+              "enable": true,
+              "value_area": 800
+            }
+          },
+          "color": {
+            "value": "#0066ff"
+          },
+          "shape": {
+            "type": "circle",
+            "stroke": {
+              "width": 0,
+              "color": "#000000"
+            },
+            "polygon": {
+              "nb_sides": 5
+            }
+          },
+          "opacity": {
+            "value": 0.5,
+            "random": false,
+            "anim": {
+              "enable": false,
+              "speed": 1,
+              "opacity_min": 0.1,
+              "sync": false
+            }
+          },
+          "size": {
+            "value": 3,
+            "random": true,
+            "anim": {
+              "enable": false,
+              "speed": 40,
+              "size_min": 0.1,
+              "sync": false
+            }
+          },
+          "line_linked": {
+            "enable": true,
+            "distance": 150,
+            "color": "#0066ff",
+            "opacity": 0.4,
+            "width": 1
+          },
+          "move": {
+            "enable": true,
+            "speed": 2,
+            "direction": "none",
+            "random": false,
+            "straight": false,
+            "out_mode": "out",
+            "bounce": false,
+            "attract": {
+              "enable": false,
+              "rotateX": 600,
+              "rotateY": 1200
+            }
+          }
+        },
+        "interactivity": {
+          "detect_on": "canvas",
+          "events": {
+            "onhover": {
+              "enable": true,
+              "mode": "grab"
+            },
+            "onclick": {
+              "enable": true,
+              "mode": "push"
+            },
+            "resize": true
+          },
+          "modes": {
+            "grab": {
+              "distance": 140,
+              "line_linked": {
+                "opacity": 1
+              }
+            },
+            "bubble": {
+              "distance": 400,
+              "size": 40,
+              "duration": 2,
+              "opacity": 8,
+              "speed": 3
+            },
+            "repulse": {
+              "distance": 200,
+              "duration": 0.4
+            },
+            "push": {
+              "particles_nb": 4
+            },
+            "remove": {
+              "particles_nb": 2
+            }
+          }
+        },
+        "retina_detect": true
+      });
+
+      initMap();
+      document.getElementById("update-btn").addEventListener("click", updateMap);
+      document.getElementById("modeToggle").addEventListener("click", toggleMode);
+
+      // Load mode dari localStorage
+      if (localStorage.getItem("darkMode") === "false") {
+        document.body.classList.add("light-mode");
+      }
+
+      // Handler untuk error API cuaca
+      window.addEventListener('unhandledrejection', event => {
+        if (event.reason.message.includes('weatherapi')) {
+          const weatherInfo = document.getElementById('weather-info');
+          weatherInfo.innerHTML = `
+            <div class="weather-error">
+              Gagal memuat data cuaca. API limit mungkin tercapai.
+            </div>
+          `;
+          event.preventDefault();
+        }
+      });
+    });
+
+    function initMap() {
+      map = L.map("map").setView([-2.5489, 118.0149], 5); // Center on Indonesia
+      L.tileLayer("https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", {
+        attribution: "&copy; Google Maps",
+        maxZoom: 20,
+      }).addTo(map);
+    }
+
+    function updateMap() {
+      // Hapus marker & layer sebelumnya
+      if (towerMarker) map.removeLayer(towerMarker);
+      if (sectorPolygonMain) map.removeLayer(sectorPolygonMain);
+      if (sectorPolygonRadar) map.removeLayer(sectorPolygonRadar);
+      if (animationInterval) clearInterval(animationInterval);
+
+      // Validasi input
+      const coordsInput = document.getElementById("bts-coords").value.trim();
+      const directionInput = document.getElementById("bts-direction").value.trim();
+      const distanceInput = document.getElementById("device-distance").value.trim();
+
+      if (!coordsInput || !directionInput || !distanceInput) {
+        alert("Semua field harus diisi!");
+        return;
+      }
+
+      // Validasi format koordinat
+      const coords = coordsInput.split(",");
+      if (coords.length !== 2) {
+        alert("Format koordinat salah! Gunakan format: lat,lng\nContoh: -8.56283,116.11464");
+        return;
+      }
+
+      const towerLat = parseFloat(coords[0].trim());
+      const towerLng = parseFloat(coords[1].trim());
+      const direction = parseFloat(directionInput);
+      const distance = parseFloat(distanceInput);
+
+      if (isNaN(towerLat)) {
+        alert("Latitude harus berupa angka!");
+        return;
+      }
+      if (isNaN(towerLng)) {
+        alert("Longitude harus berupa angka!");
+        return;
+      }
+      if (isNaN(direction) || direction < 0 || direction > 360) {
+        alert("Derajat antena harus antara 0-360!");
+        return;
+      }
+      if (isNaN(distance) || distance <= 0) {
+        alert("Jarak harus angka positif!");
+        return;
+      }
+
+      const tower = [towerLat, towerLng];
+
+      towerMarker = L.marker(tower, {
+        icon: L.divIcon({
+          className: "bts-icon",
+          html: "BTS",
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        }),
+      })
+        .addTo(map)
+        .bindPopup(
+          `<b>BTS Tower</b><br>Lat: ${towerLat.toFixed(
+            5
+          )}<br>Lng: ${towerLng.toFixed(5)}<br><br>
+          <div id="streetview-container" style="width:100%;height:300px;">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!4v1690628402345!6m8!1m7!1sCAoSLEFGMVFpcE9nd1Y5MkFjcDJ2dHZpZzJhcnQ0N7NqSzRVbThybG9zWGxBNV9KNWFV!2m2!1d${towerLat}!2d${towerLng}!3f0!4f0!5f1.1924812503605782"
+              allowfullscreen=""
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>`
+        );
+
+      map.setView(tower, 15);
+
+      // Sektor utama merah, diam
+      sectorPolygonMain = L.polygon(createSector(tower, distance, direction, 60), {
+        color: "#ff0000",
+        fillColor: "#ff0000",
+        fillOpacity: 0.4,
+        weight: 2,
+      }).addTo(map);
+
+      // Label "Sektor Target" di tengah sektor utama
+      const textLatLng = calculateDestinationPoint(tower[0], tower[1], direction, distance / 2);
+      const textIcon = L.divIcon({
+        className: "sector-label",
+        html: '<div style="color:#ff0000; font-weight:bold; font-size:16px; text-shadow: 0 0 4px black;">Sektor Target</div>',
+        iconSize: [120, 24],
+        iconAnchor: [60, 12],
+      });
+      L.marker([textLatLng.lat, textLatLng.lng], { icon: textIcon }).addTo(map);
+
+      // Animasi sektor radar biru transparan muter pelan
+      let rotation = 0;
+      animationInterval = setInterval(() => {
+        if (sectorPolygonRadar) map.removeLayer(sectorPolygonRadar);
+        rotation += 2; // rotasi 2 derajat tiap 100ms
+        if (rotation >= 360) rotation = 0;
+
+        const sectorCoordsRadar = createSector(tower, distance, direction + rotation, 60);
+        sectorPolygonRadar = L.polygon(sectorCoordsRadar, {
+          color: "#0066ff",
+          fillColor: "#0066ff",
+          fillOpacity: 0.15,
+          weight: 2,
+        }).addTo(map);
+      }, 100);
+
+      // Update detail lokasi
+      const latDMS = toDMS(towerLat, true);
+      const lngDMS = toDMS(towerLng, false);
+      document.getElementById("coord-result").innerText = `${latDMS}, ${lngDMS}`;
+
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${towerLat}&lon=${towerLng}&accept-language=id`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          document.getElementById("location-result").innerText =
+            data.display_name || "Alamat tidak ditemukan.";
+        })
+        .catch(() => {
+          document.getElementById("location-result").innerText = "Gagal mengambil alamat.";
+        });
+
+      // Update streetview iframe
+      const streetViewIframe = document.getElementById('streetview-iframe');
+      streetViewIframe.src = `https://www.google.com/maps/embed?pb=!4v1690628402345!6m8!1m7!1sCAoSLEFGMVFpcE9nd1Y5MkFjcDJ2dHZpZzJhcnQ0N7NqSzRVbThybG9zWGxBNV9KNWFV!2m2!1d${towerLat}!2d${towerLng}!3f0!4f0!5f1.1924812503605782`;
+
+      // Enhanced sector description
+      document.getElementById("sector-description").innerHTML = generateSectorDescription(direction, distance);
+
+      // Ambil data cuaca
+      getWeatherData(towerLat, towerLng);
+    }
+
+    function calculateDestinationPoint(lat, lng, bearing, distance) {
+      const R = 6378137;
+      const φ1 = (lat * Math.PI) / 180;
+      const λ1 = (lng * Math.PI) / 180;
+      const θ = (bearing * Math.PI) / 180;
+
+      const φ2 = Math.asin(
+        Math.sin(φ1) * Math.cos(distance / R) +
+          Math.cos(φ1) * Math.sin(distance / R) * Math.cos(θ)
+      );
+      const λ2 =
+        λ1 +
+        Math.atan2(
+          Math.sin(θ) * Math.sin(distance / R) * Math.cos(φ1),
+          Math.cos(distance / R) - Math.sin(φ1) * Math.sin(φ2)
+        );
+
+      return {
+        lat: (φ2 * 180) / Math.PI,
+        lng: (λ2 * 180) / Math.PI,
+      };
+    }
+
+    function createSector(center, radius, bearing, angle, steps = 64) {
+      const coords = [];
+      const startAngle = bearing - angle / 2;
+      const endAngle = bearing + angle / 2;
+
+      coords.push(center);
+
+      for (let i = 0; i <= steps; i++) {
+        const theta = startAngle + (i / steps) * (endAngle - startAngle);
+        const point = calculateDestinationPoint(center[0], center[1], theta, radius);
+        coords.push([point.lat, point.lng]);
+      }
+
+      return coords;
+    }
+
+    function generateSectorDescription(direction, distance) {
+      // Daftar arah mata angin dengan range toleransi
+      const sectors = [
+        { range: [0, 22.5], name: "Utara", code: "N" },
+        { range: [22.5, 67.5], name: "Timur Laut", code: "NE" },
+        { range: [67.5, 112.5], name: "Timur", code: "E" },
+        { range: [112.5, 157.5], name: "Tenggara", code: "SE" },
+        { range: [157.5, 202.5], name: "Selatan", code: "S" },
+        { range: [202.5, 247.5], name: "Barat Daya", code: "SW" },
+        { range: [247.5, 292.5], name: "Barat", code: "W" },
+        { range: [292.5, 337.5], name: "Barat Laut", code: "NW" },
+        { range: [337.5, 360], name: "Utara", code: "N" }
+      ];
+
+      // Cari arah yang sesuai
+      let sectorInfo = sectors.find(s => 
+        direction >= s.range[0] && direction < s.range[1]
+      ) || { name: "Tidak Terdefinisi", code: "N/A" };
+
+      // Hitung coverage area (dalam m²)
+      const coverageArea = Math.PI * Math.pow(distance, 2) * (60/360);
+      
+      // Rekomendasi tilt antena
+      const tiltRecommendation = distance > 1000 ? "Mechanical Tilt 2°-5°" : "Electrical Tilt 1°-3°";
+
+      // Kualitas sinyal teoritis
+      let signalQuality, signalClass;
+      if (distance < 500) {
+        signalQuality = "Excellent (RSRP > -80dBm)";
+        signalClass = "signal-excellent";
+      } else if (distance < 1000) {
+        signalQuality = "Good (RSRP -80dBm to -100dBm)";
+        signalClass = "signal-good";
+      } else {
+        signalQuality = "Fair (RSRP < -100dBm)";
+        signalClass = "signal-fair";
+      }
+
+      return `
+      <div class="sector-details">
+        <h4>📡 Detail Sektor ${sectorInfo.code} (${direction.toFixed(1)}°)</h4>
+        
+        <ul>
+          <li><strong>Arah Utama:</strong> ${sectorInfo.name} (${sectorInfo.range[0]}°-${sectorInfo.range[1]}°)</li>
+          <li><strong>Lebar Sektor:</strong> 60° (3GPP Standard)</li>
+          <li><strong>Jangkauan Efektif:</strong> ${distance.toLocaleString()} meter</li>
+          <li><strong>Area Cakupan:</strong> ~${coverageArea.toLocaleString()} m²</li>
+          <li><strong>Rekomendasi Tilt:</strong> ${tiltRecommendation}</li>
+          <li><strong>Kualitas Sinyal:</strong> <span class="${signalClass}">${signalQuality}</span></li>
+          <li><strong>Frekuensi Optimal:</strong>
+            <ul>
+              <li>Urban: 1800MHz (Band 3)</li>
+              <li>Rural: 900MHz (Band 8)</li>
+            </ul>
+          </li>
+        </ul>
+        
+        <h4>🛠️ Tips Optimasi</h4>
+        <ul>
+          <li>Pastikan Line of Sight (LOS) ke area target</li>
+          <li>Hindari obstacle > 60% Fresnel Zone</li>
+          <li>Adjust azimuth jika ditemukan interferensi</li>
+          <li>Periksa ketinggian antena untuk coverage maksimal</li>
+        </ul>
+      </div>
+      `;
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle("light-mode");
+      const isLight = document.body.classList.contains("light-mode");
+      localStorage.setItem("darkMode", isLight ? "false" : "true");
+      
+      // Update particles color when mode changes
+      if (isLight) {
+        particlesJS("particles-js", {
+          "particles": {
+            "color": {
+              "value": "#003399"
+            },
+            "line_linked": {
+              "color": "#003399"
+            }
+          }
+        });
+      } else {
+        particlesJS("particles-js", {
+          "particles": {
+            "color": {
+              "value": "#0066ff"
+            },
+            "line_linked": {
+              "color": "#0066ff"
+            }
+          }
+        });
+      }
+    }
+  </script>
+</body>
+</html>
